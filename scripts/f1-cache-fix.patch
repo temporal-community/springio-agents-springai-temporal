@@ -1,0 +1,12 @@
+--- a/python/f1_data.py
++++ b/python/f1_data.py
+@@ -14,7 +14,10 @@ from datetime import datetime
+
+ # Configure FastF1 cache
+-fastf1.Cache.enable_cache('~/Documents/Cline/MCP/f1-mcp-server/cache')
++import os
++_cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'cache')
++os.makedirs(_cache_dir, exist_ok=True)
++fastf1.Cache.enable_cache(_cache_dir)
+
+ def json_serial(obj):

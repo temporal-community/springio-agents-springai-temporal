@@ -26,3 +26,6 @@ target/
 
 ### Env ###
 .env
+
+### Cloned MCP servers ###
+f1-mcp-server/

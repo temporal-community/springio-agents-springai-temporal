@@ -25,6 +25,13 @@ The workflow loop:
 
 Temporal provides durable execution - if the worker crashes mid-loop, the workflow replays from history and resumes where it left off without re-executing completed activities.
 
+## Prerequisites
+
+- **Java 21+**
+- **Maven 3.9+**
+- **Temporal CLI** — `brew install temporal` (macOS) or see [Temporal CLI docs](https://docs.temporal.io/cli)
+- **OpenAI API key** — set as `OPENAI_API_KEY` environment variable
+
 ## Running
 
 ### 1. Start the Temporal dev server

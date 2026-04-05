@@ -1,0 +1,30 @@
+# ABOUTME: Spring Boot + Temporal + MCP configuration for the agentic loop with F1 data.
+# Configures OpenAI, Temporal worker, and MCP client for the F1 MCP server.
+
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o
+    mcp:
+      client:
+        stdio:
+          servers-configuration: classpath:mcp-servers.json
+
+  temporal:
+    namespace: default
+    connection:
+      target: localhost:7233
+    workers:
+      - task-queue: agent-task-queue
+        workflow-classes:
+          - io.temporal.ai.workshop.AgentWorkflowImpl
+        activity-beans:
+          - chatModelActivity
+          - toolActivitiesImpl
+          - mcpClientActivityImpl

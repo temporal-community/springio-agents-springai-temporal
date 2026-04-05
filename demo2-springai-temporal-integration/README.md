@@ -40,28 +40,14 @@ Same tools as demo1:
 
 ## Prerequisites
 
-This demo depends on the `temporal-spring-ai` library, which is not published to Maven Central. You must build it locally and install a core-only jar (the full jar includes optional dependencies like vector store and MCP that we don't need).
+- **Java 21+**
+- **Maven 3.9+**
+- **Temporal CLI** — `brew install temporal` (macOS) or see [Temporal CLI docs](https://docs.temporal.io/cli)
+- **OpenAI API key** — set as `OPENAI_API_KEY` environment variable
+- **temporal-spring-ai library** — a pre-built jar is included in the repo. From the project root, run:
 
 ```bash
-cd /path/to/temporal-spring-ai
-
-# Build the project
-./gradlew build -x test
-
-# Extract, strip optional modules, and repackage as core-only jar
-mkdir -p build/lib-only && cd build/lib-only
-jar xf ../libs/springAI-0.0.1-SNAPSHOT-plain.jar
-rm -rf io/temporal/ai/chattools io/temporal/ai/workflows io/temporal/ai/vectorstore io/temporal/ai/mcp io/temporal/ai/TemporalSpringAiChat.class META-INF
-jar cf temporal-spring-ai-core.jar io
-cd ../..
-
-# Install to local Maven repo
-mvn install:install-file \
-  -Dfile=build/lib-only/temporal-spring-ai-core.jar \
-  -DgroupId=io.temporal.ai \
-  -DartifactId=temporal-spring-ai \
-  -Dversion=0.0.1-SNAPSHOT \
-  -Dpackaging=jar
+./scripts/install-libs.sh
 ```
 
 ## Running
