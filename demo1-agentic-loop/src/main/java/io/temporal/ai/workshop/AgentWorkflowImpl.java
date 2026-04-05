@@ -3,12 +3,11 @@
 
 package io.temporal.ai.workshop;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.temporal.activity.ActivityOptions;
 import io.temporal.ai.workshop.model.LlmMessage;
 import io.temporal.ai.workshop.model.LlmResponse;
 import io.temporal.ai.workshop.model.ToolCallInfo;
+import io.temporal.workflow.ActivityStub;
 import io.temporal.workflow.Workflow;
 
 import java.time.Duration;
@@ -31,13 +30,10 @@ public class AgentWorkflowImpl implements AgentWorkflow {
                     .setStartToCloseTimeout(Duration.ofSeconds(60))
                     .build());
 
-    private final ToolActivities toolActivities = Workflow.newActivityStub(
-            ToolActivities.class,
+    private final ActivityStub toolActivity = Workflow.newUntypedActivityStub(
             ActivityOptions.newBuilder()
                     .setStartToCloseTimeout(Duration.ofSeconds(30))
                     .build());
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public String run(String goal) {
@@ -61,10 +57,10 @@ public class AgentWorkflowImpl implements AgentWorkflow {
             // Add assistant message (with tool calls) to conversation
             messages.add(LlmMessage.assistant(response.content(), response.toolCalls()));
 
-            // Execute each tool call as an activity and add results
+            // Execute each tool call as a dynamic activity and add results
             for (ToolCallInfo toolCall : response.toolCalls()) {
                 logger.info("Calling tool: {}({})", toolCall.name(), toolCall.arguments());
-                String result = executeTool(toolCall.name(), toolCall.arguments());
+                String result = toolActivity.execute(toolCall.name(), String.class, toolCall.arguments());
                 logger.info("Tool result: {}", result);
                 messages.add(LlmMessage.toolResponse(toolCall.id(), toolCall.name(), result));
             }
@@ -72,20 +68,5 @@ public class AgentWorkflowImpl implements AgentWorkflow {
 
         logger.warn("Agent did not complete within {} iterations.", MAX_ITERATIONS);
         return "Agent did not complete within " + MAX_ITERATIONS + " iterations.";
-    }
-
-    private String executeTool(String name, String arguments) {
-        try {
-            JsonNode args = objectMapper.readTree(arguments);
-            return switch (name) {
-                case "getIpAddress" -> toolActivities.getIpAddress();
-                case "getLocationInfo" -> toolActivities.getLocationInfo(args.get("ipAddress").asText());
-                case "getCoordinates" -> toolActivities.getCoordinates(args.get("city").asText());
-                case "getWeather" -> toolActivities.getWeather(args.get("latitude").asDouble(), args.get("longitude").asDouble());
-                default -> "Unknown tool: " + name;
-            };
-        } catch (Exception e) {
-            return "Error executing tool " + name + ": " + e.getMessage();
-        }
     }
 }

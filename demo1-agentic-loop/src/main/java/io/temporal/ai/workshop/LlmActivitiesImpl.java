@@ -6,8 +6,6 @@ package io.temporal.ai.workshop;
 import io.temporal.ai.workshop.model.LlmMessage;
 import io.temporal.ai.workshop.model.LlmResponse;
 import io.temporal.ai.workshop.model.ToolCallInfo;
-import io.temporal.ai.workshop.tools.ToolSchemas;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -19,7 +17,6 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
 
 import java.util.ArrayList;
@@ -33,9 +30,9 @@ public class LlmActivitiesImpl implements LlmActivities {
     private final ChatModel chatModel;
     private final List<ToolCallback> toolCallbackList;
 
-    public LlmActivitiesImpl(ChatModel chatModel) {
+    public LlmActivitiesImpl(ChatModel chatModel, ToolRegistry toolRegistry) {
         this.chatModel = chatModel;
-        this.toolCallbackList = List.of(ToolCallbacks.from(new ToolSchemas()));
+        this.toolCallbackList = toolRegistry.getSchemas();
     }
 
     @Override

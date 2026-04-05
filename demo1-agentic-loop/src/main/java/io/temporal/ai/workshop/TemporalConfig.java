@@ -1,8 +1,10 @@
 // ABOUTME: Spring configuration that sets up Temporal client, worker factory, and worker.
-// Registers the agent workflow and LLM activity with the worker.
+// Registers the agent workflow, LLM activity, and dynamic tool activity with the worker.
 
 package io.temporal.ai.workshop;
 
+import io.temporal.ai.workshop.tools.LocationTools;
+import io.temporal.ai.workshop.tools.WeatherTools;
 import io.temporal.client.WorkflowClient;
 import io.temporal.serviceclient.WorkflowServiceStubs;
 import io.temporal.worker.Worker;
@@ -26,12 +28,19 @@ public class TemporalConfig {
         return WorkflowClient.newInstance(serviceStubs);
     }
 
+    @Bean
+    public ToolRegistry toolRegistry() {
+        return new ToolRegistry(new LocationTools(), new WeatherTools());
+    }
+
     @Bean(initMethod = "start")
-    public WorkerFactory workerFactory(WorkflowClient workflowClient, ChatModel chatModel) {
+    public WorkerFactory workerFactory(WorkflowClient workflowClient, ChatModel chatModel, ToolRegistry toolRegistry) {
         WorkerFactory factory = WorkerFactory.newInstance(workflowClient);
         Worker worker = factory.newWorker(TASK_QUEUE);
         worker.registerWorkflowImplementationTypes(AgentWorkflowImpl.class);
-        worker.registerActivitiesImplementations(new LlmActivitiesImpl(chatModel), new ToolActivitiesImpl());
+        worker.registerActivitiesImplementations(
+                new LlmActivitiesImpl(chatModel, toolRegistry),
+                new DynamicToolActivity(toolRegistry));
         return factory;
     }
 }
