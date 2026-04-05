@@ -1,0 +1,25 @@
+# ABOUTME: Spring Boot + Temporal configuration for the agentic loop demo.
+# The temporal-spring-boot-starter reads the temporal section to auto-configure the worker.
+
+spring:
+  main:
+    web-application-type: none
+    banner-mode: off
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4o
+
+  temporal:
+    namespace: default
+    connection:
+      target: localhost:7233
+    workers:
+      - task-queue: agent-task-queue
+        workflow-classes:
+          - io.temporal.ai.workshop.AgentWorkflowImpl
+        activity-beans:
+          - chatModelActivity
+          - toolActivitiesImpl

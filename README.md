@@ -14,6 +14,7 @@ A series of demos showing how to build AI agents using Spring AI and Temporal. E
 | Demo | Description |
 |------|-------------|
 | [demo1-agentic-loop](demo1-agentic-loop/) | An agentic loop as a Temporal workflow — calls an LLM with tools and loops until the goal is achieved |
+| [demo2-springai-temporal-integration](demo2-springai-temporal-integration/) | Same agentic loop using the [temporal-spring-ai](https://github.com/temporal-community/temporal-spring-ai) library — Spring AI handles the loop, Temporal provides durability |
 
 ## Building
 
