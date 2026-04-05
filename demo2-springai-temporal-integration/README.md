@@ -21,6 +21,12 @@ Spring AI's `ChatClient` drives the tool calling loop. Under the hood, `Activity
 - **`ToolActivities`** — A single `@ActivityInterface` with both `@ActivityMethod` and `@Tool` on each method. This serves as both the Temporal activity contract and the Spring AI tool definition.
 - **`temporal-spring-boot-starter`** — Auto-configures the Temporal client, worker, and factory from `application.yaml`. No manual `TemporalConfig` needed.
 
+### Trade-off: tool coupling
+
+In demo1, the `tools/` directory contains plain Java classes with `@Tool` annotations — no Temporal imports. The `DynamicToolActivity` and `ToolRegistry` bridge them to Temporal, keeping tool logic completely decoupled from infrastructure.
+
+In demo2, the library requires tools to be Temporal activity stubs (with both `@ActivityMethod` and `@Tool` on the same interface). The library's `TemporalToolUtil` only accepts activity stubs, local activity stubs, Nexus service stubs, or `@DeterministicTool` classes — plain Java objects are rejected. This means the tools directory now contains Temporal-specific code. You get a simpler workflow, but tools are no longer portable outside of Temporal.
+
 ### Tools
 
 Same tools as demo1:
