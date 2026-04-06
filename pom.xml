@@ -22,6 +22,7 @@
         <module>demo1-agentic-loop</module>
         <module>demo2-springai-temporal-integration</module>
         <module>demo3-mcp</module>
+        <module>demo4-hitl</module>
     </modules>
 
     <properties>

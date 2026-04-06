@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "f1-data": {
+      "command": "bash",
+      "args": ["-c", "source /Users/cdavisafc/Projects/Temporal/AI/MCP/f1-mcp-server/.venv/bin/activate && node /Users/cdavisafc/Projects/Temporal/AI/MCP/f1-mcp-server/build/index.js"]
+    }
+  }
+}

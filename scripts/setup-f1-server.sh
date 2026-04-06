@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# ABOUTME: Clones, patches, and builds the F1 MCP server for demo3.
-# Run this once before running demo3.
+# ABOUTME: Clones, patches, and builds the F1 MCP server for demos that use MCP.
+# Run this once before running demo3 or demo4.
 
 set -euo pipefail
 
@@ -44,9 +44,8 @@ uv venv -q
 source .venv/bin/activate
 uv pip install -q fastf1 pandas numpy
 
-# Write mcp-servers.json with the resolved path
-echo "Writing MCP server config to $MCP_CONFIG..."
-cat > "$MCP_CONFIG" <<EOF
+# Write mcp-servers.json for each demo that uses MCP
+MCP_CONFIG_CONTENT=$(cat <<EOF
 {
   "mcpServers": {
     "f1-data": {
@@ -56,10 +55,18 @@ cat > "$MCP_CONFIG" <<EOF
   }
 }
 EOF
+)
+
+for demo in demo3-mcp demo4-hitl; do
+    config="$PROJECT_ROOT/$demo/src/main/resources/mcp-servers.json"
+    if [ -d "$PROJECT_ROOT/$demo" ]; then
+        echo "Writing MCP server config to $config..."
+        echo "$MCP_CONFIG_CONTENT" > "$config"
+    fi
+done
 
 echo ""
 echo "F1 MCP server setup complete."
 echo "  Server location: $F1_DIR"
-echo "  MCP config written to: $MCP_CONFIG"
 echo ""
-echo "You can now run demo3."
+echo "You can now run demo3 or demo4."
