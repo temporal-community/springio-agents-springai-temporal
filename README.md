@@ -27,11 +27,11 @@ mvn -pl demo1-agentic-loop compile
 
 ---
 
-## Maintainer notes: rebuilding the temporal-spring-ai jars
+## Maintainer notes: rebuilding the temporal-spring-ai jar
 
-The jars in `lib/` are pre-built so workshop participants don't need to clone and build the [temporal-spring-ai](https://github.com/temporal-community/temporal-spring-ai) library themselves. **You do not need to follow these steps to use the demos** — just run `./scripts/install-libs.sh`.
+The jar in `lib/` is pre-built so workshop participants don't need to clone and build the [temporal-spring-ai](https://github.com/temporal-community/temporal-spring-ai) library themselves. **You do not need to follow these steps to use the demos** — just run `./scripts/install-libs.sh`.
 
-If you need to rebuild the jars (e.g., after the library is updated), here's how they were created. The library is a monolithic Gradle project that bundles library code with a sample app and optional features (vector store, MCP, Redis). We build the full project, then strip out the packages we don't need to avoid pulling in optional dependencies.
+If you need to rebuild the jar (e.g., after the library is updated), here's how it was created. The library is a monolithic Gradle project that bundles library code with a sample app and optional features (vector store, Redis). We build the full project, then strip out the packages we don't need to avoid pulling in optional dependencies.
 
 ### Build the library
 
@@ -42,41 +42,28 @@ cd /path/to/temporal-spring-ai
 
 This produces `build/libs/springAI-0.0.1-SNAPSHOT-plain.jar` (the plain jar without Spring Boot's fat-jar packaging).
 
-### 0.0.1-SNAPSHOT (core only, used by demo2)
+### Repackage as core + MCP jar
 
-Strips out the sample app, vector store, MCP, and sample tools:
-
-```bash
-mkdir -p build/lib-only && cd build/lib-only
-jar xf ../libs/springAI-0.0.1-SNAPSHOT-plain.jar
-rm -rf io/temporal/ai/chattools io/temporal/ai/workflows io/temporal/ai/vectorstore io/temporal/ai/mcp io/temporal/ai/TemporalSpringAiChat.class META-INF
-jar cf temporal-spring-ai-core.jar io
-```
-
-Copy to `lib/temporal-spring-ai-0.0.1-SNAPSHOT.jar`.
-
-### 0.0.2-SNAPSHOT (core + MCP, used by demo3)
-
-Same as above but keeps the `io.temporal.ai.mcp` package:
+Strips out the sample app, vector store, and sample tools. Keeps the core integration and MCP support:
 
 ```bash
-mkdir -p build/lib-mcp && cd build/lib-mcp
+mkdir -p build/lib-repack && cd build/lib-repack
 jar xf ../libs/springAI-0.0.1-SNAPSHOT-plain.jar
 rm -rf io/temporal/ai/chattools io/temporal/ai/workflows io/temporal/ai/vectorstore io/temporal/ai/TemporalSpringAiChat.class META-INF
-jar cf temporal-spring-ai-mcp.jar io
+jar cf temporal-spring-ai-0.0.1-SNAPSHOT.jar io
 ```
 
-Copy to `lib/temporal-spring-ai-0.0.2-SNAPSHOT.jar`.
+Copy to `lib/temporal-spring-ai-0.0.1-SNAPSHOT.jar`. A single jar is used by all demos (demo2, demo3, demo4). The MCP classes are included but inert unless MCP client dependencies and config are present.
 
-### What's in each jar
+### What's included
 
-| Package | 0.0.1 (core) | 0.0.2 (core + MCP) |
+| Package | Included | Purpose |
 |---|---|---|
-| `io.temporal.ai.chat.client` | Yes | Yes |
-| `io.temporal.ai.chat.model` | Yes | Yes |
-| `io.temporal.ai.tool` | Yes | Yes |
-| `io.temporal.ai.reflection` | Yes | Yes |
-| `io.temporal.ai.mcp` | No | Yes |
-| `io.temporal.ai.vectorstore` | No | No |
-| `io.temporal.ai.chattools` | No | No |
-| `io.temporal.ai.workflows` | No | No |
+| `io.temporal.ai.chat.client` | Yes | `TemporalChatClient`, `TemporalToolUtil` |
+| `io.temporal.ai.chat.model` | Yes | `ActivityChatModel`, `ChatModelActivity`, `ChatModelTypes` |
+| `io.temporal.ai.tool` | Yes | `ActivityToolCallback`, `DeterministicTool`, local activity wrappers |
+| `io.temporal.ai.reflection` | Yes | Stub type detection utilities |
+| `io.temporal.ai.mcp` | Yes | `McpToolCallback`, `ActivityMcpClient`, `McpClientActivity` |
+| `io.temporal.ai.vectorstore` | No | Not needed — would require Redis dependencies |
+| `io.temporal.ai.chattools` | No | Sample tools from the library's demo app |
+| `io.temporal.ai.workflows` | No | Sample workflow from the library's demo app |

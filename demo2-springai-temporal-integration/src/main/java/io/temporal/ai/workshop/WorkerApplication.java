@@ -5,8 +5,15 @@ package io.temporal.ai.workshop;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 
-@SpringBootApplication(scanBasePackages = "io.temporal.ai")
+@SpringBootApplication
+@ComponentScan(
+        basePackages = "io.temporal.ai",
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.REGEX,
+                pattern = "io\\.temporal\\.ai\\.mcp\\..*"))
 public class WorkerApplication {
 
     public static void main(String[] args) {
