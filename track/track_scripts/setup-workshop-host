@@ -170,7 +170,7 @@ pip3 install --break-system-packages --ignore-installed mitmproxy
 # Install the mitmproxy CA cert into the system and JVM truststores so
 # Java code that runs through the proxy doesn't get SSL errors.
 # We start mitmproxy briefly to generate the CA cert, then stop it.
-mitmdump --set block_global=false &
+mitmdump --listen-port 8889 --set block_global=false &
 MITM_PID=$!
 sleep 4
 kill $MITM_PID 2>/dev/null || true
