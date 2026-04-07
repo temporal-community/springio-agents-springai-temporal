@@ -29,3 +29,6 @@ target/
 
 ### Cloned MCP servers ###
 f1-mcp-server/
+
+*.exe
+scripts/instruqt.exe

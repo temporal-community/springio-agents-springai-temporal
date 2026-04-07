@@ -8,6 +8,14 @@ set -euxo pipefail
 # =============================================================================
 
 # ─── System packages ──────────────────────────────────────────────────────────
+# Wait for unattended-upgrades to release the dpkg lock
+systemctl disable unattended-upgrades 2>/dev/null || true
+systemctl stop unattended-upgrades 2>/dev/null || true
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+    echo "Waiting for dpkg lock..."
+    sleep 5
+done
+
 apt-get update && apt-get install -y --no-install-recommends \
     wget curl git vim nano unzip ca-certificates bash-completion \
     fontconfig python3 python3-pip python3-venv iptables iproute2 \
