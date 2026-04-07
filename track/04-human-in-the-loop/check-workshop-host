@@ -1,0 +1,17 @@
+#!/bin/bash
+fail() { echo "FAIL: $1"; exit 1; }
+pass() { echo "PASS: $1"; }
+
+# Check for at least one completed workflow
+COMPLETED=$(temporal workflow list \
+    --address 127.0.0.1:7233 \
+    --query 'TaskQueue="agent-task-queue" AND ExecutionStatus="Completed"' \
+    2>/dev/null | grep -c "Completed" || true)
+
+if [ "$COMPLETED" -lt 1 ]; then
+    fail "No completed workflows found. Run the starter, answer the agent's question, and wait for it to finish."
+fi
+pass "At least one workflow completed successfully"
+
+echo ""
+echo "Demo 4 complete — the agent paused, asked a question, received a signal, and resumed."

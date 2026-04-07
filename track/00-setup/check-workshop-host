@@ -1,0 +1,29 @@
+#!/bin/bash
+# Check that OPENAI_API_KEY is set in the environment (written to /root/.bashrc
+# or exported in the current session via agent_env).
+
+fail() { echo "FAIL: $1"; exit 1; }
+pass() { echo "PASS: $1"; }
+
+# Instruqt injects participant env vars into /root/.bashrc or agent env.
+# Check both the running environment and bashrc.
+KEY_SET=false
+if [ -n "${OPENAI_API_KEY:-}" ]; then
+    KEY_SET=true
+elif grep -q "OPENAI_API_KEY" /root/.bashrc 2>/dev/null; then
+    KEY_SET=true
+fi
+
+if [ "$KEY_SET" = "false" ]; then
+    fail "OPENAI_API_KEY is not set. Run: export OPENAI_API_KEY=sk-..."
+fi
+pass "OPENAI_API_KEY is set"
+
+# Verify Temporal is healthy
+if ! temporal operator cluster health --address 127.0.0.1:7233 2>/dev/null | grep -q SERVING; then
+    fail "Temporal server is not responding. Check: systemctl status temporal-server"
+fi
+pass "Temporal server is healthy"
+
+echo ""
+echo "All checks passed — you're ready for the demos."

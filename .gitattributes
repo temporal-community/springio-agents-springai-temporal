@@ -1,0 +1,9 @@
+# Keep shell scripts with LF line endings - they run on Linux VMs
+track/track_scripts/setup-workshop-host text eol=lf
+track/**/setup-workshop-host text eol=lf
+track/**/check-workshop-host text eol=lf
+track/**/cleanup-workshop-host text eol=lf
+
+# Markdown and YAML can use native line endings
+track/**/*.md text
+track/**/*.yml text
