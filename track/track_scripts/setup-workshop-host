@@ -124,7 +124,7 @@ git checkout "$F1_COMMIT"
 
 # Apply the cache-path patch (already in the workshop repo)
 echo "Patching FastF1 cache path..."
-git apply /workspace/workshop/scripts/f1-cache-fix.patch
+sed -i "s|fastf1.Cache.enable_cache.*|import os\n_cache_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'cache')\nos.makedirs(_cache_dir, exist_ok=True)\nfastf1.Cache.enable_cache(_cache_dir)|" python/f1_data.py
 echo "  Patched."
 
 # Build the Node/TypeScript side
