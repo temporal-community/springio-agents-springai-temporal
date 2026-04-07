@@ -165,7 +165,7 @@ echo "F1 MCP server ready at $F1_DIR"
 # ─── mitmproxy + network control panel ────────────────────────────────────────
 
 # Install mitmproxy
-pip3 install --break-system-packages mitmproxy
+pip3 install --break-system-packages --ignore-installed mitmproxy
 
 # Install the mitmproxy CA cert into the system and JVM truststores so
 # Java code that runs through the proxy doesn't get SSL errors.
