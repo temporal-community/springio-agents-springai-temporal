@@ -191,8 +191,13 @@ MITM_CA_PEM="$MITM_CERT_DIR/mitmproxy-ca-cert.pem"
 cp "$MITM_CA_PEM" /usr/local/share/ca-certificates/mitmproxy-ca.crt
 update-ca-certificates
 
-# JVM truststore (Java 21 uses cacerts at $JAVA_HOME/lib/security/cacerts)
+# JVM truststore — Adoptium's update-ca-certificates hook handles this automatically.
+# Delete any stale alias first in case of re-runs, then re-import.
 JAVA_HOME_PATH=$(dirname $(dirname $(readlink -f $(which java))))
+keytool -delete \
+    -alias mitmproxy \
+    -keystore "$JAVA_HOME_PATH/lib/security/cacerts" \
+    -storepass changeit 2>/dev/null || true
 keytool -importcert \
     -trustcacerts \
     -alias mitmproxy \
