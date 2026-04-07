@@ -14,7 +14,7 @@ apt-get update && apt-get install -y --no-install-recommends \
     build-essential
 
 # ─── Node.js 18 (required for F1 MCP server) ──────────────────────────────────
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
 node --version
 npm --version
@@ -114,7 +114,7 @@ mvn -pl demo1-agentic-loop,demo2-springai-temporal-integration,demo3-mcp,demo4-h
 # Pinned to a known-good commit. Update this hash if the upstream repo changes
 # in a way that breaks the build.
 F1_REPO="https://github.com/rakeshgangwar/f1-mcp-server.git"
-F1_COMMIT="b8f5e2a"   # TODO: replace with the latest verified commit hash before the event
+F1_COMMIT="73b95ec"
 F1_DIR="/workspace/f1-mcp-server"
 
 echo "Cloning F1 MCP server at commit $F1_COMMIT..."
