@@ -1,0 +1,686 @@
+#!/bin/bash
+set -euxo pipefail
+
+# =============================================================================
+# Spring I/O 2025 — Spring AI + Temporal Workshop
+# Track-level VM setup
+# Runs once when the track environment is created.
+# =============================================================================
+
+# ─── System packages ──────────────────────────────────────────────────────────
+apt-get update && apt-get install -y --no-install-recommends \
+    wget curl git vim nano unzip ca-certificates bash-completion \
+    fontconfig python3 python3-pip python3-venv iptables iproute2 \
+    build-essential
+
+# ─── Node.js 18 (required for F1 MCP server) ──────────────────────────────────
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt-get install -y nodejs
+node --version
+npm --version
+
+# ─── uv (fast Python package installer, used for FastF1 venv) ─────────────────
+curl -LsSf https://astral.sh/uv/install.sh | sh
+ln -sf /root/.local/bin/uv /usr/local/bin/uv
+uv --version
+
+# ─── Java 21 (Eclipse Temurin) ────────────────────────────────────────────────
+wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public \
+    | gpg --dearmor > /etc/apt/trusted.gpg.d/adoptium.gpg
+echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print $2}' /etc/os-release) main" \
+    > /etc/apt/sources.list.d/adoptium.list
+apt-get update && apt-get install -y temurin-21-jdk
+
+java -version
+
+# ─── Maven 3.9 ────────────────────────────────────────────────────────────────
+MAVEN_VERSION=3.9.9
+wget -q "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
+    -O /tmp/maven.tar.gz
+tar -xzf /tmp/maven.tar.gz -C /opt
+ln -s /opt/apache-maven-${MAVEN_VERSION} /opt/maven
+ln -s /opt/maven/bin/mvn /usr/local/bin/mvn
+rm /tmp/maven.tar.gz
+
+export MAVEN_HOME=/opt/maven
+echo "export MAVEN_HOME=/opt/maven" >> /root/.bashrc
+echo 'export PATH="${MAVEN_HOME}/bin:${PATH}"' >> /root/.bashrc
+
+mvn -version
+
+# ─── Temporal CLI ─────────────────────────────────────────────────────────────
+curl -sSf https://temporal.download/cli.sh | sh
+chmod +x /root/.temporalio/bin/temporal
+ln -sf /root/.temporalio/bin/temporal /usr/local/bin/temporal
+
+temporal --version
+
+# ─── Temporal dev server (systemd) ────────────────────────────────────────────
+mkdir -p /workspace
+
+cat > /etc/systemd/system/temporal-server.service <<'EOF'
+[Unit]
+Description=Temporal Dev Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/temporal server start-dev \
+    --ui-port 8080 \
+    --ip 0.0.0.0 \
+    --db-filename /workspace/temporal.db
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/workspace/temporal.log
+StandardError=append:/workspace/temporal.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable temporal-server
+systemctl start temporal-server
+
+echo "Waiting for Temporal server..."
+for i in $(seq 1 30); do
+    if temporal operator cluster health --address 127.0.0.1:7233 2>/dev/null | grep -q SERVING; then
+        echo "Temporal server healthy."
+        break
+    fi
+    sleep 3
+done
+
+# ─── Workshop repo ────────────────────────────────────────────────────────────
+git clone https://github.com/temporal-community/springio-agents-springai-temporal.git /workspace/workshop
+# NOTE: Update the URL above once the repo is pushed to temporal-community.
+# If the repo is still under mmerrell's personal account at track build time,
+# use: https://github.com/mmerrell/springio-agents-springai-temporal.git
+
+# Install the pre-built temporal-spring-ai jar into the local Maven repo
+cd /workspace/workshop
+bash scripts/install-libs.sh
+
+# Pre-warm Maven dependency cache for all four demos
+for module in demo1-agentic-loop demo2-springai-temporal-integration demo3-mcp demo4-hitl; do
+    echo "Warming Maven cache for $module..."
+    mvn -pl "$module" dependency:resolve -q 2>/dev/null || true
+done
+
+# Full compile to catch any issues at image build time
+mvn -pl demo1-agentic-loop,demo2-springai-temporal-integration,demo3-mcp,demo4-hitl compile -q
+
+# ─── F1 MCP server ────────────────────────────────────────────────────────────
+# Pinned to a known-good commit. Update this hash if the upstream repo changes
+# in a way that breaks the build.
+F1_REPO="https://github.com/rakeshgangwar/f1-mcp-server.git"
+F1_COMMIT="b8f5e2a"   # TODO: replace with the latest verified commit hash before the event
+F1_DIR="/workspace/f1-mcp-server"
+
+echo "Cloning F1 MCP server at commit $F1_COMMIT..."
+git clone "$F1_REPO" "$F1_DIR"
+cd "$F1_DIR"
+git checkout "$F1_COMMIT"
+
+# Apply the cache-path patch (already in the workshop repo)
+echo "Patching FastF1 cache path..."
+git apply /workspace/workshop/scripts/f1-cache-fix.patch
+echo "  Patched."
+
+# Build the Node/TypeScript side
+echo "Installing Node dependencies..."
+npm install --silent
+echo "Building TypeScript..."
+npm run build
+
+# Build the Python side with uv
+echo "Setting up Python venv for FastF1..."
+uv venv -q
+source "$F1_DIR/.venv/bin/activate"
+uv pip install -q fastf1 pandas numpy
+deactivate
+
+# Write mcp-servers.json for demo3 and demo4 with correct VM paths
+MCP_JSON=$(cat <<EOF
+{
+  "mcpServers": {
+    "f1-data": {
+      "command": "bash",
+      "args": ["-c", "source ${F1_DIR}/.venv/bin/activate && node ${F1_DIR}/build/index.js"]
+    }
+  }
+}
+EOF
+)
+
+for demo in demo3-mcp demo4-hitl; do
+    config="/workspace/workshop/${demo}/src/main/resources/mcp-servers.json"
+    echo "Writing mcp-servers.json for ${demo}..."
+    echo "$MCP_JSON" > "$config"
+done
+
+cd /workspace/workshop
+echo "F1 MCP server ready at $F1_DIR"
+
+# ─── mitmproxy + network control panel ────────────────────────────────────────
+
+# Install mitmproxy
+pip3 install --break-system-packages mitmproxy
+
+# Install the mitmproxy CA cert into the system and JVM truststores so
+# Java code that runs through the proxy doesn't get SSL errors.
+# We start mitmproxy briefly to generate the CA cert, then stop it.
+mitmdump --set block_global=false &
+MITM_PID=$!
+sleep 4
+kill $MITM_PID 2>/dev/null || true
+wait $MITM_PID 2>/dev/null || true
+
+MITM_CERT_DIR="/root/.mitmproxy"
+MITM_CA_PEM="$MITM_CERT_DIR/mitmproxy-ca-cert.pem"
+
+# System truststore
+cp "$MITM_CA_PEM" /usr/local/share/ca-certificates/mitmproxy-ca.crt
+update-ca-certificates
+
+# JVM truststore (Java 21 uses cacerts at $JAVA_HOME/lib/security/cacerts)
+JAVA_HOME_PATH=$(dirname $(dirname $(readlink -f $(which java))))
+keytool -importcert \
+    -trustcacerts \
+    -alias mitmproxy \
+    -file "$MITM_CA_PEM" \
+    -keystore "$JAVA_HOME_PATH/lib/security/cacerts" \
+    -storepass changeit \
+    -noprompt
+
+# Write the mitmproxy addon script that reads the toggle state
+mkdir -p /workspace/proxy
+
+cat > /workspace/proxy/toggle_addon.py <<'PYEOF'
+"""
+mitmproxy addon: reads /workspace/proxy/state.json and blocks or passes
+outbound requests based on which service groups are toggled off.
+
+State file format (written by the control panel UI):
+{
+  "kill_all": false,
+  "services": {
+    "openai":      true,
+    "weather":     true,
+    "geolocation": true,
+    "ipinfo":      true,
+    "f1":          true
+  }
+}
+A value of `true` means the service is ALLOWED through.
+"""
+import json
+import os
+from mitmproxy import http
+
+STATE_FILE = "/workspace/proxy/state.json"
+
+# Maps service keys to the hostname substrings they match
+SERVICE_HOSTS = {
+    "openai":      ["api.openai.com"],
+    "weather":     ["api.open-meteo.com"],
+    "geolocation": ["ip-api.com"],
+    "ipinfo":      ["icanhazip.com"],
+    "f1":          ["ergast.com", "api.openf1.org", "livetiming.formula1.com"],
+}
+
+DEFAULT_STATE = {
+    "kill_all": False,
+    "services": {k: True for k in SERVICE_HOSTS},
+}
+
+
+def _load_state():
+    try:
+        with open(STATE_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return DEFAULT_STATE
+
+
+def request(flow: http.HTTPFlow) -> None:
+    state = _load_state()
+    host = flow.request.pretty_host
+
+    if state.get("kill_all"):
+        flow.response = http.Response.make(
+            503, b"[Workshop proxy] All external services disabled.", {"Content-Type": "text/plain"}
+        )
+        return
+
+    services = state.get("services", {})
+    for key, hostnames in SERVICE_HOSTS.items():
+        if not services.get(key, True):
+            if any(h in host for h in hostnames):
+                flow.response = http.Response.make(
+                    503,
+                    f"[Workshop proxy] Service '{key}' is currently disabled.".encode(),
+                    {"Content-Type": "text/plain"},
+                )
+                return
+PYEOF
+
+# Write default state file
+cat > /workspace/proxy/state.json <<'EOF'
+{
+  "kill_all": false,
+  "services": {
+    "openai": true,
+    "weather": true,
+    "geolocation": true,
+    "ipinfo": true,
+    "f1": true
+  }
+}
+EOF
+
+# mitmproxy systemd service (transparent proxy on port 8888)
+cat > /etc/systemd/system/workshop-proxy.service <<'EOF'
+[Unit]
+Description=Workshop Network Proxy (mitmproxy)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/mitmdump \
+    --listen-port 8888 \
+    --set block_global=false \
+    --set ssl_insecure=false \
+    -s /workspace/proxy/toggle_addon.py
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/workspace/proxy/proxy.log
+StandardError=append:/workspace/proxy/proxy.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable workshop-proxy
+systemctl start workshop-proxy
+
+# ─── Control panel UI (Flask) ─────────────────────────────────────────────────
+pip3 install --break-system-packages flask
+
+cat > /workspace/proxy/controlpanel.py <<'PYEOF'
+"""
+Tiny Flask app that serves the network control panel UI.
+Reads and writes /workspace/proxy/state.json.
+Served on port 5000.
+"""
+import json, os
+from flask import Flask, jsonify, request, send_from_directory
+
+app = Flask(__name__, static_folder="/workspace/proxy/static")
+STATE_FILE = "/workspace/proxy/state.json"
+
+DEFAULT_STATE = {
+    "kill_all": False,
+    "services": {
+        "openai": True,
+        "weather": True,
+        "geolocation": True,
+        "ipinfo": True,
+    },
+}
+
+SERVICE_LABELS = {
+    "openai":      "OpenAI  (api.openai.com)",
+    "weather":     "Weather  (api.open-meteo.com)",
+    "geolocation": "Geolocation  (ip-api.com)",
+    "ipinfo":      "IP Info  (icanhazip.com)",
+    "f1":          "F1 Data  (ergast.com / api.openf1.org)",
+}
+
+
+def read_state():
+    try:
+        with open(STATE_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return dict(DEFAULT_STATE)
+
+
+def write_state(state):
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f, indent=2)
+
+
+@app.route("/")
+def index():
+    return send_from_directory("/workspace/proxy/static", "index.html")
+
+
+@app.route("/api/state", methods=["GET"])
+def get_state():
+    return jsonify(read_state())
+
+
+@app.route("/api/state", methods=["POST"])
+def set_state():
+    state = request.get_json(force=True)
+    write_state(state)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/service/<key>", methods=["POST"])
+def toggle_service(key):
+    data = request.get_json(force=True)
+    state = read_state()
+    state["services"][key] = bool(data.get("enabled", True))
+    write_state(state)
+    return jsonify({"ok": True, "key": key, "enabled": state["services"][key]})
+
+
+@app.route("/api/kill_all", methods=["POST"])
+def kill_all():
+    data = request.get_json(force=True)
+    state = read_state()
+    state["kill_all"] = bool(data.get("enabled", False))
+    write_state(state)
+    return jsonify({"ok": True, "kill_all": state["kill_all"]})
+
+
+@app.route("/api/labels", methods=["GET"])
+def labels():
+    return jsonify(SERVICE_LABELS)
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+PYEOF
+
+# Control panel static UI
+mkdir -p /workspace/proxy/static
+
+cat > /workspace/proxy/static/index.html <<'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Control Panel</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2d3148;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+  h1 { font-size: 1.3rem; font-weight: 600; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .subtitle { font-size: 0.8rem; color: var(--muted); margin-bottom: 28px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+  }
+  .service-name { font-size: 0.95rem; font-weight: 500; }
+  .service-host { font-size: 0.75rem; color: var(--muted); font-family: monospace; margin-top: 2px; }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    display: inline-block; margin-right: 8px;
+    transition: background 0.2s;
+  }
+  .dot-on  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-off { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+  /* Toggle switch */
+  .toggle { position: relative; display: inline-block; width: 48px; height: 26px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--red);
+    transition: .25s; border-radius: 26px;
+  }
+  .slider:before {
+    position: absolute; content: "";
+    height: 20px; width: 20px;
+    left: 3px; bottom: 3px;
+    background: white; transition: .25s; border-radius: 50%;
+  }
+  input:checked + .slider { background: var(--green); }
+  input:checked + .slider:before { transform: translateX(22px); }
+  /* Kill switch */
+  .kill-card {
+    background: #1e0f0f;
+    border: 1px solid #5a1a1a;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .kill-card.active {
+    background: #2d0f0f;
+    border-color: var(--red);
+    box-shadow: 0 0 12px rgba(239,68,68,0.25);
+  }
+  .kill-label { font-size: 0.95rem; font-weight: 600; color: var(--red); }
+  .kill-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-top: 20px;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .reset-btn:hover { border-color: var(--blue); color: var(--blue); }
+  .section-label {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin-bottom: 10px; margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<h1>🔌 Network Control Panel</h1>
+<p class="subtitle">Toggle external service access for the workshop demos</p>
+
+<div class="section-label">External Services</div>
+<div id="services"></div>
+
+<div class="section-label" style="margin-top:20px;">Kill Switch</div>
+<div class="kill-card" id="kill-card">
+  <div class="card-header">
+    <div>
+      <div class="kill-label">⚡ Kill All External Traffic</div>
+      <div class="kill-sub">Blocks all outbound calls regardless of service toggles</div>
+    </div>
+    <label class="toggle">
+      <input type="checkbox" id="kill-toggle" onchange="toggleKillAll(this.checked)">
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<button class="reset-btn" onclick="resetAll()">↺ Re-enable All Services</button>
+
+<script>
+async function load() {
+  const [stateRes, labelRes] = await Promise.all([
+    fetch('/api/state'), fetch('/api/labels')
+  ]);
+  const state  = await stateRes.json();
+  const labels = await labelRes.json();
+  renderServices(state, labels);
+  document.getElementById('kill-toggle').checked = state.kill_all;
+  document.getElementById('kill-card').classList.toggle('active', state.kill_all);
+}
+
+function renderServices(state, labels) {
+  const container = document.getElementById('services');
+  container.innerHTML = '';
+  for (const [key, label] of Object.entries(labels)) {
+    const enabled = state.services[key] !== false;
+    const [name, host] = label.split('  ');
+    container.innerHTML += `
+      <div class="card" id="card-${key}">
+        <div class="card-header">
+          <div>
+            <div class="service-name">
+              <span class="status-dot ${enabled ? 'dot-on' : 'dot-off'}" id="dot-${key}"></span>
+              ${name}
+            </div>
+            <div class="service-host">${host || ''}</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-${key}" ${enabled ? 'checked' : ''}
+              onchange="toggleService('${key}', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>`;
+  }
+}
+
+async function toggleService(key, enabled) {
+  await fetch('/api/service/' + key, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({enabled})
+  });
+  const dot = document.getElementById('dot-' + key);
+  dot.className = 'status-dot ' + (enabled ? 'dot-on' : 'dot-off');
+}
+
+async function toggleKillAll(enabled) {
+  await fetch('/api/kill_all', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({enabled})
+  });
+  document.getElementById('kill-card').classList.toggle('active', enabled);
+}
+
+async function resetAll() {
+  const res = await fetch('/api/state');
+  const state = await res.json();
+  state.kill_all = false;
+  for (const k of Object.keys(state.services)) state.services[k] = true;
+  await fetch('/api/state', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(state)
+  });
+  load();
+}
+
+load();
+setInterval(load, 4000);
+</script>
+</body>
+</html>
+HTMLEOF
+
+# Control panel systemd service
+cat > /etc/systemd/system/workshop-controlpanel.service <<'EOF'
+[Unit]
+Description=Workshop Network Control Panel
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python3 /workspace/proxy/controlpanel.py
+Restart=on-failure
+RestartSec=3
+StandardOutput=append:/workspace/proxy/controlpanel.log
+StandardError=append:/workspace/proxy/controlpanel.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable workshop-controlpanel
+systemctl start workshop-controlpanel
+
+# ─── code-server (VS Code in browser) ─────────────────────────────────────────
+curl -fsSL https://code-server.dev/install.sh | sh
+code-server --install-extension vscjava.vscode-java-pack
+
+mkdir -p /root/.local/share/code-server/User
+cat > /root/.local/share/code-server/User/settings.json <<'EOF'
+{
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.startupEditor": "none",
+    "security.workspace.trust.enabled": false,
+    "editor.fontSize": 14,
+    "editor.tabSize": 4,
+    "java.format.enabled": true,
+    "workbench.activityBar.visible": false,
+    "workbench.statusBar.visible": true,
+    "editor.suggestOnTriggerCharacters": true
+}
+EOF
+
+cat > /etc/systemd/system/code-server.service <<'EOF'
+[Unit]
+Description=Code Server
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/usr/bin/code-server --host 0.0.0.0 --port 8443 --cert --auth none /workspace/workshop
+StandardOutput=append:/workspace/code-server.log
+StandardError=append:/workspace/code-server.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable code-server
+systemctl start code-server
+
+# ─── Shell environment ─────────────────────────────────────────────────────────
+cat >> /root/.bashrc <<'EOF'
+
+export TEMPORAL_ADDRESS="127.0.0.1:7233"
+
+# Route ALL outbound HTTP/HTTPS through the workshop proxy (mitmproxy on 8888).
+# This covers Java (via JAVA_TOOL_OPTIONS), Python (HTTP_PROXY/HTTPS_PROXY),
+# and Node.js (NODE_EXTRA_CA_CERTS + proxy env vars respected by node-fetch/axios).
+export HTTP_PROXY="http://127.0.0.1:8888"
+export HTTPS_PROXY="http://127.0.0.1:8888"
+export NO_PROXY="127.0.0.1,localhost"
+export JAVA_TOOL_OPTIONS="-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=8888 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=8888 -Dhttp.nonProxyHosts=127.0.0.1|localhost"
+# Trust the mitmproxy CA cert for Node.js (node ignores system truststore by default)
+export NODE_EXTRA_CA_CERTS="/root/.mitmproxy/mitmproxy-ca-cert.pem"
+
+# OPENAI_API_KEY is injected by Instruqt from the participant environment variable.
+# If running locally: export OPENAI_API_KEY=sk-...
+EOF
+
+echo "Track setup complete."
