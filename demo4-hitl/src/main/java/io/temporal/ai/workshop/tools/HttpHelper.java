@@ -22,6 +22,9 @@ public final class HttpHelper {
                 .build();
         try {
             HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("HTTP GET failed for " + url + " — status " + response.statusCode() + ": " + response.body());
+            }
             return response.body();
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("HTTP GET failed for " + url, e);
