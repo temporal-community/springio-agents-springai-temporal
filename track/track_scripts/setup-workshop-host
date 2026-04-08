@@ -265,14 +265,20 @@ def request(flow: http.HTTPFlow) -> None:
     host = flow.request.pretty_host
 
     if state.get("kill_all"):
-        flow.kill()
+        flow.response = http.Response.make(
+            503, b"[Workshop proxy] All external services disabled.", {"Content-Type": "text/plain"}
+        )
         return
 
     services = state.get("services", {})
     for key, hostnames in SERVICE_HOSTS.items():
         if not services.get(key, True):
             if any(h in host for h in hostnames):
-                flow.kil())
+                flow.response = http.Response.make(
+                    503,
+                    f"[Workshop proxy] Service '{key}' is currently disabled.".encode(),
+                    {"Content-Type": "text/plain"},
+                )
                 return
 PYEOF
 
@@ -479,20 +485,25 @@ cat > /workspace/proxy/static/index.html <<'HTMLEOF'
   }
   input:checked + .slider { background: var(--green); }
   input:checked + .slider:before { transform: translateX(22px); }
+
+  #kill-toggle + .slider { background: var(--green); }
+  #kill-toggle:checked + .slider { background: var(--red); }
+
   /* Kill switch */
   .kill-card {
-    background: #1e0f0f;
-    border: 1px solid #5a1a1a;
-    border-radius: var(--radius);
-    padding: 18px 20px;
-    margin-bottom: 14px;
+      background: #0f1e0f;
+      border: 1px solid #1a5a1a;
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 14px;
   }
   .kill-card.active {
-    background: #2d0f0f;
-    border-color: var(--red);
-    box-shadow: 0 0 12px rgba(239,68,68,0.25);
+      background: #2d0f0f;
+      border-color: var(--red);
+      box-shadow: 0 0 12px rgba(239,68,68,0.25);
   }
-  .kill-label { font-size: 0.95rem; font-weight: 600; color: var(--red); }
+  .kill-label { font-size: 0.95rem; font-weight: 600; color: var(--green); }
+  .kill-card.active .kill-label { color: var(--red); }
   .kill-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
   .reset-btn {
     background: none;
@@ -524,9 +535,8 @@ cat > /workspace/proxy/static/index.html <<'HTMLEOF'
 <div class="kill-card" id="kill-card">
   <div class="card-header">
     <div>
-      <div class="kill-label">⚡ Kill All External Traffic</div>
-      <div class="kill-sub">Blocks all outbound calls regardless of service toggles</div>
-    </div>
+      <div class="kill-label" id="kill-label">⚡ Kill Switch: Network is OPEN</div>
+      <div class="kill-sub" id="kill-sub">All external services are flowing normally</div>    </div>
     <label class="toggle">
       <input type="checkbox" id="kill-toggle" onchange="toggleKillAll(this.checked)">
       <span class="slider"></span>
@@ -585,12 +595,19 @@ async function toggleService(key, enabled) {
 }
 
 async function toggleKillAll(enabled) {
-  await fetch('/api/kill_all', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({enabled})
-  });
-  document.getElementById('kill-card').classList.toggle('active', enabled);
+    await fetch('/api/kill_all', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({enabled})
+    });
+      document.getElementById('kill-toggle').checked = state.kill_all;
+      document.getElementById('kill-card').classList.toggle('active', state.kill_all);
+      document.getElementById('kill-label').textContent = state.kill_all
+          ? '⚡ Kill Switch: Network is BLOCKED'
+          : '⚡ Kill Switch: Network is OPEN';
+      document.getElementById('kill-sub').textContent = state.kill_all
+          ? 'All external traffic is currently blocked'
+          : 'All external services are flowing normally';
 }
 
 async function resetAll() {
