@@ -55,7 +55,7 @@ difficulty: basic
 timelimit: 1800
 enhanced_loading: null
 ---
-
+<iframe src="http://localhost:5000" width="100%" height="400px" frameborder="0"></iframe>
 ## Demo 1: The Agentic Loop
 
 ### What we're looking at
