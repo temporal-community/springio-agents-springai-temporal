@@ -265,20 +265,14 @@ def request(flow: http.HTTPFlow) -> None:
     host = flow.request.pretty_host
 
     if state.get("kill_all"):
-        flow.response = http.Response.make(
-            503, b"[Workshop proxy] All external services disabled.", {"Content-Type": "text/plain"}
-        )
+        flow.kill()
         return
 
     services = state.get("services", {})
     for key, hostnames in SERVICE_HOSTS.items():
         if not services.get(key, True):
             if any(h in host for h in hostnames):
-                flow.response = http.Response.make(
-                    503,
-                    f"[Workshop proxy] Service '{key}' is currently disabled.".encode(),
-                    {"Content-Type": "text/plain"},
-                )
+                flow.kil())
                 return
 PYEOF
 
