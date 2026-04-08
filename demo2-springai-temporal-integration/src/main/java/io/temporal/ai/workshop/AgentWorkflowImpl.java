@@ -4,9 +4,9 @@
 package io.temporal.ai.workshop;
 
 import io.temporal.activity.ActivityOptions;
-import io.temporal.ai.chat.client.TemporalChatClient;
-import io.temporal.ai.chat.model.ActivityChatModel;
-import io.temporal.ai.chat.model.ChatModelActivity;
+import io.temporal.springai.chat.TemporalChatClient;
+import io.temporal.springai.model.ActivityChatModel;
+import io.temporal.springai.activity.ChatModelActivity;
 import io.temporal.ai.workshop.tools.ToolActivities;
 import io.temporal.workflow.Workflow;
 import io.temporal.workflow.WorkflowInit;
