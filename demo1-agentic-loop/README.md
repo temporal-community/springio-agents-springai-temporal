@@ -79,6 +79,28 @@ mvn -pl demo1-agentic-loop compile exec:java -Dexec.args="What is the weather wh
 mvn -pl demo1-agentic-loop compile exec:java -Dexec.args="Compare the weather in London and Sydney right now"
 ```
 
+## Try the durability
+
+One of Temporal's key benefits is that workflows survive worker crashes. To see this in action:
+
+1. Start a workflow with a multi-step prompt (so it takes a few seconds):
+   ```bash
+   mvn -pl demo1-agentic-loop compile exec:java -Dexec.args="Compare the weather in London and Sydney right now"
+   ```
+
+2. While the workflow is running (watch the worker terminal for activity logs), **kill the worker with Ctrl+C**.
+
+3. In the Temporal Web UI at [http://localhost:8233](http://localhost:8233), the workflow shows as "Running" — it's waiting for the worker to come back.
+
+4. Restart the worker:
+   ```bash
+   mvn -pl demo1-agentic-loop spring-boot:run
+   ```
+
+5. The workflow **resumes where it left off** — completed activities are not re-executed. You can confirm this in the Web UI: the event history shows which activities ran before the crash and which ran after the restart.
+
+This is durable execution. Without Temporal, a crash mid-loop means starting over.
+
 ## Adding or swapping tools
 
 Tools are fully decoupled from the agent workflow and activity infrastructure. Each tool is a plain Java method annotated with Spring AI's `@Tool` and `@ToolParam` — these annotations are the single source of truth for both the LLM schema and the execution logic.

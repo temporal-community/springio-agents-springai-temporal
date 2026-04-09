@@ -7,7 +7,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/.."
 F1_DIR="$PROJECT_ROOT/f1-mcp-server"
-MCP_CONFIG="$PROJECT_ROOT/demo3-mcp/src/main/resources/mcp-servers.json"
 
 # Clone if not already present
 if [ -d "$F1_DIR" ]; then
