@@ -45,8 +45,6 @@ tabs:
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-
-
 - id: jdezbgqex4nu
   title: Network Control Panel
   type: service
