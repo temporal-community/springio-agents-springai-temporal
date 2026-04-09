@@ -13,7 +13,7 @@ public final class HttpHelper {
 
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
 
-    private HttpHelper() {}
+    private HttpHelper() {} 
 
     public static String get(String url) {
         HttpRequest request = HttpRequest.newBuilder()

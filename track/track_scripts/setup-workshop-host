@@ -653,6 +653,13 @@ systemctl enable workshop-controlpanel
 systemctl start workshop-controlpanel
 
 # ─── code-server (VS Code in browser) ─────────────────────────────────────────
+# Wait aggressively for dpkg lock before code-server install
+wait_for_dpkg
+# Also kill any lingering apt/dpkg processes
+kill $(lsof /var/lib/dpkg/lock-frontend 2>/dev/null | awk 'NR>1 {print $2}') 2>/dev/null || true
+sleep 5
+wait_for_dpkg
+
 curl -fsSL https://code-server.dev/install.sh | sh
 code-server --install-extension vscjava.vscode-java-pack
 
