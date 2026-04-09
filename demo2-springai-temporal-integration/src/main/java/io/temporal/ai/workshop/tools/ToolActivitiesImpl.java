@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 @Component("toolActivitiesImpl")
 public class ToolActivitiesImpl implements ToolActivities {
@@ -43,7 +44,7 @@ public class ToolActivitiesImpl implements ToolActivities {
     @Override
     public String getWeather(double latitude, double longitude) {
         log.info("Looking up weather for lat={}, lon={}", latitude, longitude);
-        String url = String.format(
+        String url = String.format(Locale.ROOT,
                 "https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f"
                         + "&current=temperature_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit",
                 latitude, longitude);

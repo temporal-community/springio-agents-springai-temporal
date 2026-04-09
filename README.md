@@ -11,6 +11,41 @@ A series of demos showing how to build AI agents using Spring AI and Temporal. E
 | [demo3-mcp](demo3-mcp/) | Adds F1 race data via an MCP server — the agent chains F1 schedule tools with weather tools |
 | [demo4-hitl](demo4-hitl/) | Human-in-the-loop — the agent can ask the user questions mid-execution via signals and queries |
 
+## Running the workshop
+
+**At the live Spring I/O workshop**, sandboxed environments are provided via Instruqt — all dependencies are pre-installed. You only need to bring your OpenAI API key.
+
+**To run independently** (outside the live workshop), you need:
+
+- Java 21+
+- Maven 3.9+
+- Temporal CLI (`brew install temporal` on macOS, or see [Temporal CLI docs](https://docs.temporal.io/cli))
+- An `OPENAI_API_KEY` environment variable
+- For demos 3 and 4: Node.js 18+, Python 3.8+, and `uv`
+
+One-time setup before running demo 2, 3, or 4:
+
+```bash
+./scripts/install-libs.sh
+```
+
+For demos 3 and 4 only:
+
+```bash
+./scripts/setup-f1-server.sh
+```
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|-------------|-----|
+| Workflow starts but never completes | Temporal server not running | Run `temporal server start-dev` in a separate terminal |
+| `401 Unauthorized` from OpenAI | Missing or invalid API key | `export OPENAI_API_KEY=sk-...` |
+| Worker starts but exits immediately | Build error or missing dependency | Run `mvn -pl <demo> compile` and check for errors |
+| Demo 3/4 worker fails on startup | F1 MCP server not built | Run `./scripts/setup-f1-server.sh` |
+| `Could not find artifact io.temporal.ai:temporal-spring-ai` | Library jar not installed | Run `./scripts/install-libs.sh` |
+| Port 7233 already in use | Another Temporal server running | Stop it or check with `lsof -i :7233` |
+
 ## Building
 
 Build all demos from the root:

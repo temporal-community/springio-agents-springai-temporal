@@ -98,3 +98,7 @@ mvn -pl demo2-springai-temporal-integration compile exec:java -Dexec.args="Compa
 ### Observing the workflow
 
 View running workflows in the Temporal Web UI at [http://localhost:8233](http://localhost:8233). Each LLM call and tool execution appears as a separate activity in the workflow history, just like demo1.
+
+### Try the durability
+
+Start a multi-step workflow, kill the worker mid-run with Ctrl+C, then restart it — the workflow resumes exactly where it left off. See [demo1's durability section](../demo1-agentic-loop/README.md#try-the-durability) for step-by-step instructions.
