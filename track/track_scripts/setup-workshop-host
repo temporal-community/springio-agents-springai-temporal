@@ -240,7 +240,7 @@ STATE_FILE = "/workspace/proxy/state.json"
 # Maps service keys to the hostname substrings they match
 SERVICE_HOSTS = {
     "openai":      ["api.openai.com"],
-    "weather":     ["api.open-meteo.com"],
+    "weather":     ["api.open-meteo.com", "geocoding-api.open-meteo.com"],
     "geolocation": ["ip-api.com"],
     "ipinfo":      ["icanhazip.com"],
     "f1":          ["ergast.com", "api.openf1.org", "livetiming.formula1.com"],
@@ -706,6 +706,7 @@ systemctl start code-server
 cat >> /root/.bashrc <<'EOF'
 
 export TEMPORAL_ADDRESS="127.0.0.1:7233"
+export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 # Route ALL outbound HTTP/HTTPS through the workshop proxy (mitmproxy on 8888).
 # This covers Java (via JAVA_TOOL_OPTIONS), Python (HTTP_PROXY/HTTPS_PROXY),
