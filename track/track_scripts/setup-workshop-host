@@ -654,13 +654,16 @@ systemctl start workshop-controlpanel
 
 # ─── code-server (VS Code in browser) ─────────────────────────────────────────
 # Wait aggressively for dpkg lock before code-server install
-wait_for_dpkg
-# Also kill any lingering apt/dpkg processes
-kill $(lsof /var/lib/dpkg/lock-frontend 2>/dev/null | awk 'NR>1 {print $2}') 2>/dev/null || true
-sleep 5
-wait_for_dpkg
+# Install code-server manually to control dpkg timing
+CODE_SERVER_VERSION="4.115.0"
+mkdir -p ~/.cache/code-server
+curl -fL "https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server_${CODE_SERVER_VERSION}_amd64.deb" \
+    -o ~/.cache/code-server/code-server.deb
 
-curl -fsSL https://code-server.dev/install.sh | sh
+# Download is done — now wait for lock before installing
+wait_for_dpkg
+dpkg -i ~/.cache/code-server/code-server.deb
+
 code-server --install-extension vscjava.vscode-java-pack
 
 mkdir -p /root/.local/share/code-server/User
