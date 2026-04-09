@@ -23,6 +23,18 @@ notes:
 
     Hit **Start** when you're ready.
 tabs:
+- id: knacglkx4ape
+  title: VS Code
+  type: service
+  hostname: workshop-host
+  path: ?folder=/workspace/workshop/demo1-agentic-loop&openFile=/workspace/workshop/demo1-agentic-loop/src/main/resources/application.properties
+  port: 8443
+- id: xxcmhunoiqs8
+  title: Temporal Web UI
+  type: service
+  hostname: workshop-host
+  path: /
+  port: 8080
 - id: psvbfnfqdmza
   title: Terminal 1 - Worker
   type: terminal
@@ -33,18 +45,8 @@ tabs:
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: knacglkx4ape
-  title: VS Code
-  type: service
-  hostname: workshop-host
-  path: ?folder=/workspace/workshop/demo1-agentic-loop
-  port: 8443
-- id: xxcmhunoiqs8
-  title: Temporal Web UI
-  type: service
-  hostname: workshop-host
-  path: /
-  port: 8080
+
+
 - id: jdezbgqex4nu
   title: Network Control Panel
   type: service
