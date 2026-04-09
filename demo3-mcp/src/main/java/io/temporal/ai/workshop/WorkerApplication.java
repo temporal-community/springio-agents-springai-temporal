@@ -1,12 +1,13 @@
 // ABOUTME: Spring Boot entry point that starts the Temporal worker.
 // The temporal-spring-boot-starter auto-configures the worker from application.yaml.
+// The temporal-spring-ai plugin auto-registers ChatModelActivity and McpClientActivity via auto-configuration.
 
 package io.temporal.ai.workshop;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = "io.temporal.ai")
+@SpringBootApplication
 public class WorkerApplication {
 
     public static void main(String[] args) {
