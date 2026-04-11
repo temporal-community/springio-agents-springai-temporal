@@ -21,25 +21,35 @@ public class Starter {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             System.err.println("Usage: Starter \"<your goal>\"");
+            System.err.println("       Starter --workflow-id <id>");
             System.err.println("Example: Starter \"Should I bring rain gear to the next F1 race?\"");
             System.exit(1);
         }
 
-        String goal = String.join(" ", args);
-        System.out.println("Starting agent with goal: " + goal);
-
         WorkflowServiceStubs serviceStubs = WorkflowServiceStubs.newLocalServiceStubs();
         WorkflowClient client = WorkflowClient.newInstance(serviceStubs);
 
-        AgentWorkflow workflow = client.newWorkflowStub(
-                AgentWorkflow.class,
-                WorkflowOptions.newBuilder()
-                        .setWorkflowId("agent-" + UUID.randomUUID())
-                        .setTaskQueue(TASK_QUEUE)
-                        .build());
+        AgentWorkflow workflow;
 
-        // Start the workflow asynchronously
-        WorkflowClient.start(workflow::run, goal);
+        if (args[0].equals("--workflow-id")) {
+            if (args.length < 2) {
+                System.err.println("Error: --workflow-id requires a workflow ID argument");
+                System.exit(1);
+            }
+            String workflowId = args[1];
+            System.out.println("Reconnecting to workflow: " + workflowId);
+            workflow = client.newWorkflowStub(AgentWorkflow.class, workflowId);
+        } else {
+            String goal = String.join(" ", args);
+            System.out.println("Starting agent with goal: " + goal);
+            workflow = client.newWorkflowStub(
+                    AgentWorkflow.class,
+                    WorkflowOptions.newBuilder()
+                            .setWorkflowId("agent-" + UUID.randomUUID())
+                            .setTaskQueue(TASK_QUEUE)
+                            .build());
+            WorkflowClient.start(workflow::run, goal);
+        }
 
         // Wait for result on a background thread
         WorkflowStub untypedStub = WorkflowStub.fromTyped(workflow);
