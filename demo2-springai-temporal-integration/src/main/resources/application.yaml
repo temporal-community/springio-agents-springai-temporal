@@ -6,6 +6,8 @@ spring:
     web-application-type: none
     banner-mode: off
   ai:
+    retry:
+      max-attempts: 1
     openai:
       api-key: ${OPENAI_API_KEY:}
       chat:

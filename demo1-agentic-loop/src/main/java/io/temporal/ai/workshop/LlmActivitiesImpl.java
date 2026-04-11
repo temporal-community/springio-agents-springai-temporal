@@ -41,7 +41,7 @@ public class LlmActivitiesImpl implements LlmActivities {
 
         var options = OpenAiChatOptions.builder()
                 .toolCallbacks(toolCallbackList)
-                .internalToolExecutionEnabled(false)
+                .internalToolExecutionEnabled(false)  // Let Temporal handle tool execution
                 .build();
 
         ChatResponse response = chatModel.call(new Prompt(springMessages, options));
