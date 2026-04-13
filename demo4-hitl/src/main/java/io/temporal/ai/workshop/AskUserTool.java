@@ -3,12 +3,10 @@
 
 package io.temporal.ai.workshop;
 
-import io.temporal.springai.tool.DeterministicTool;
 import io.temporal.workflow.Workflow;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
-@DeterministicTool
 public class AskUserTool {
 
     private boolean inputNeeded = false;
