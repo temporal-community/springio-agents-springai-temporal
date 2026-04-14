@@ -23,5 +23,4 @@ spring:
         workflow-classes:
           - io.temporal.ai.workshop.AgentWorkflowImpl
         activity-beans:
-          - chatModelActivity
           - toolActivitiesImpl
