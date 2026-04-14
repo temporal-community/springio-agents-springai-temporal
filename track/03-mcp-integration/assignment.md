@@ -1,6 +1,6 @@
 ---
 slug: mcp-integration
-id: ir1uvq3cieus
+id: mdjvk80jmazw
 type: challenge
 title: 'Demo 3: MCP Tooling'
 teaser: Chain F1 race data from an MCP server with live weather data — both sets of
@@ -26,29 +26,29 @@ notes:
     Every F1 data fetch is visible in the Temporal workflow history, retryable, and protected by timeouts.
     Hit **Start** when you're ready.
 tabs:
-- id: rng3dkhigxsc
+- id: cydxvqrbxwkm
   title: Terminal 1 - Worker
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: bywhcnxnfbxn
+- id: 2lvc1ynhskdz
   title: Terminal 2 - Starter
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: nfgj6wknyzbw
+- id: aqyyxjcnkaqz
   title: VS Code
   type: service
   hostname: workshop-host
   path: ?folder=/workspace/workshop/demo3-mcp
   port: 8443
-- id: c55vypprskrw
+- id: 6ov95b4mpnad
   title: Temporal Web UI
   type: service
   hostname: workshop-host
   path: /
   port: 8080
-- id: cznvhzrttrdx
+- id: krrfgd3tcg10
   title: Network Control Panel
   type: service
   hostname: workshop-host

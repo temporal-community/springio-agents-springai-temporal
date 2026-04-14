@@ -1,6 +1,6 @@
 ---
 slug: agentic-loop
-id: ikiozdzsqoz2
+id: pwiqbr0yebxw
 type: challenge
 title: 'Demo 1: The Agentic Loop'
 teaser: See how an AI agentic loop becomes a durable Temporal workflow — every LLM
@@ -23,29 +23,29 @@ notes:
 
     Hit **Start** when you're ready.
 tabs:
-- id: knacglkx4ape
+- id: hecqrdpw9fk9
   title: VS Code
   type: service
   hostname: workshop-host
   path: ?folder=/workspace/workshop/demo1-agentic-loop&openFile=/workspace/workshop/demo1-agentic-loop/src/main/resources/application.properties
   port: 8443
-- id: xxcmhunoiqs8
+- id: lv6tqwfg0skl
   title: Temporal Web UI
   type: service
   hostname: workshop-host
   path: /
   port: 8080
-- id: psvbfnfqdmza
+- id: xdkskopcksyl
   title: Terminal 1 - Worker
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: f51q4emhj96t
+- id: poy3zls03r9n
   title: Terminal 2 - Starter
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: jdezbgqex4nu
+- id: obrvxkihr7lp
   title: Network Control Panel
   type: service
   hostname: workshop-host

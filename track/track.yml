@@ -1,5 +1,5 @@
-slug: springio-agents-springai-temporal
-id: ot0vtq0xqckp
+slug: springio-agents-springai-temporal-v2
+id: 8decm5d9yvv7
 title: Building Durable AI Agents with Spring AI + Temporal
 teaser: See how Temporal turns a fragile AI agentic loop into a production-grade,
   fault-tolerant workflow — step by step, in running Java code.
@@ -35,5 +35,5 @@ lab_config:
   hideStopButton: false
   default_layout: AssignmentLeft
   default_layout_sidebar_size: 35
-checksum: "3711759704454867836"
+checksum: "6768156889376588176"
 enhanced_loading: false

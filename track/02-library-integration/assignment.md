@@ -1,6 +1,6 @@
 ---
 slug: library-integration
-id: epe7a2dw6dzb
+id: xiwumym5lkpz
 type: challenge
 title: 'Demo 2: The temporal-spring-ai Library'
 teaser: The same durable agentic loop, collapsed to a single line — the library handles
@@ -27,29 +27,29 @@ notes:
     Same durability guarantees. Same visibility in the Temporal UI.
     Hit **Start** when you're ready.
 tabs:
-- id: xg0m8j2fqqzy
+- id: crfysbiyjuxn
   title: Terminal 1 - Worker
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: lemxrjc7o1qg
+- id: pc7htedqjypt
   title: Terminal 2 - Starter
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: dvjeiswwmoxh
+- id: ynhseyhe0h8v
   title: VS Code
   type: service
   hostname: workshop-host
   path: ?folder=/workspace/workshop/demo2-springai-temporal-integration
   port: 8443
-- id: 7wdn8ehk7zsv
+- id: hbh3lxc3n4yz
   title: Temporal Web UI
   type: service
   hostname: workshop-host
   path: /
   port: 8080
-- id: fubh1dvhfz9e
+- id: tm1yubhn1xdn
   title: Network Control Panel
   type: service
   hostname: workshop-host

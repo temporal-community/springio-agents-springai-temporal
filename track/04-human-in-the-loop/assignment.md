@@ -1,6 +1,6 @@
 ---
 slug: human-in-the-loop
-id: vtmkwcoaaygm
+id: uavza7f3q76e
 type: challenge
 title: 'Demo 4: Human in the Loop'
 teaser: The agent pauses mid-execution to ask you a question — durably waiting for
@@ -30,29 +30,29 @@ notes:
 
     Hit **Start** when you're ready.
 tabs:
-- id: 99p6hpyoszqn
+- id: 27kw5fjkpucf
   title: Terminal 1 - Worker
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: gmtgeq1y1z0v
+- id: ljs2ltucjabj
   title: Terminal 2 - Starter
   type: terminal
   hostname: workshop-host
   workdir: /workspace/workshop
-- id: 35mcppfz1be6
+- id: wrurccxz5y09
   title: VS Code
   type: service
   hostname: workshop-host
   path: ?folder=/workspace/workshop/demo4-hitl&openFile=/workspace/workshop/demo4-hitl/src/main/java/io/temporal/ai/workshop/AskUserTool.java
   port: 8443
-- id: exz7w4vfyo29
+- id: ntpnxqxi5a2o
   title: Temporal Web UI
   type: service
   hostname: workshop-host
   path: /
   port: 8080
-- id: sqmspkxhukys
+- id: h3lkzijce8gw
   title: Network Control Panel
   type: service
   hostname: workshop-host
