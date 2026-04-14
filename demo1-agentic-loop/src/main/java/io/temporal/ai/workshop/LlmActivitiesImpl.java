@@ -47,7 +47,8 @@ public class LlmActivitiesImpl implements LlmActivities {
         ChatResponse response = chatModel.call(new Prompt(springMessages, options));
 
         // Anthropic returns text and tool calls as separate generations,
-        // so we scan all generations rather than just the first.
+        // so we scan all generations rather than just the first. This works 
+        // for both OpenAI and Anthropic.
         String text = null;
         List<ToolCallInfo> toolCalls = null;
         for (var generation : response.getResults()) {
