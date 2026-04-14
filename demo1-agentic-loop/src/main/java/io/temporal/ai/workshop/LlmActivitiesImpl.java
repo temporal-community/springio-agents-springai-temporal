@@ -45,16 +45,24 @@ public class LlmActivitiesImpl implements LlmActivities {
                 .build();
 
         ChatResponse response = chatModel.call(new Prompt(springMessages, options));
-        AssistantMessage assistant = response.getResult().getOutput();
 
+        // Anthropic returns text and tool calls as separate generations,
+        // so we scan all generations rather than just the first.
+        String text = null;
         List<ToolCallInfo> toolCalls = null;
-        if (assistant.hasToolCalls()) {
-            toolCalls = assistant.getToolCalls().stream()
-                    .map(tc -> new ToolCallInfo(tc.id(), tc.name(), tc.arguments()))
-                    .toList();
+        for (var generation : response.getResults()) {
+            AssistantMessage output = generation.getOutput();
+            if (text == null && output.getText() != null && !output.getText().isEmpty()) {
+                text = output.getText();
+            }
+            if (output.hasToolCalls()) {
+                toolCalls = output.getToolCalls().stream()
+                        .map(tc -> new ToolCallInfo(tc.id(), tc.name(), tc.arguments()))
+                        .toList();
+            }
         }
 
-        return new LlmResponse(assistant.getText(), toolCalls);
+        return new LlmResponse(text, toolCalls);
     }
 
     private List<Message> toSpringMessages(List<LlmMessage> messages) {
