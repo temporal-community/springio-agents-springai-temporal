@@ -38,7 +38,7 @@ The Starter starts the workflow asynchronously, then enters a polling loop:
 - **Node.js 18+** (for the F1 MCP server)
 - **Python 3.8+** and **uv** (for the F1 MCP server's FastF1 library)
 - **Temporal CLI** — `brew install temporal` (macOS) or see [Temporal CLI docs](https://docs.temporal.io/cli)
-- **OpenAI API key** — set as `OPENAI_API_KEY` environment variable
+- **Anthropic API key** — set as `ANTHROPIC_API_KEY` environment variable
 
 From the project root, run both setup scripts:
 
@@ -58,10 +58,10 @@ From the project root, run both setup scripts:
 temporal server start-dev
 ```
 
-### 2. Set your OpenAI API key
+### 2. Set your Anthropic API key
 
 ```bash
-export OPENAI_API_KEY=sk-...
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ### 3. Start the worker

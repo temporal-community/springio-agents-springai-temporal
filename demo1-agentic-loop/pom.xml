@@ -12,7 +12,7 @@
 
     <artifactId>demo1-agentic-loop</artifactId>
     <name>Demo 1 - Agentic Loop</name>
-    <description>Agentic loop using Spring AI with OpenAI, orchestrated by Temporal</description>
+    <description>Agentic loop using Spring AI with Anthropic Claude, orchestrated by Temporal</description>
 
     <dependencies>
         <dependency>
@@ -22,7 +22,7 @@
 
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-openai</artifactId>
+            <artifactId>spring-ai-starter-model-anthropic</artifactId>
         </dependency>
 
         <dependency>

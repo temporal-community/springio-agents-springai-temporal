@@ -16,7 +16,7 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.anthropic.AnthropicChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class LlmActivitiesImpl implements LlmActivities {
     public LlmResponse callLlm(List<LlmMessage> messages) {
         List<Message> springMessages = toSpringMessages(messages);
 
-        var options = OpenAiChatOptions.builder()
+        var options = AnthropicChatOptions.builder()
                 .toolCallbacks(toolCallbackList)
                 .internalToolExecutionEnabled(false)  // Let Temporal handle tool execution
                 .build();

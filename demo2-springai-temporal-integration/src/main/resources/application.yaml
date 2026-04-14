@@ -8,11 +8,11 @@ spring:
   ai:
     retry:
       max-attempts: 1
-    openai:
-      api-key: ${OPENAI_API_KEY:}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:}
       chat:
         options:
-          model: gpt-4o
+          model: claude-sonnet-4-20250514
 
   temporal:
     namespace: default

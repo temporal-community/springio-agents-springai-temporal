@@ -1,5 +1,5 @@
-# ABOUTME: Spring Boot + Temporal + MCP configuration for the agentic loop with F1 data.
-# Configures Anthropic Claude, Temporal worker, and MCP client for the F1 MCP server.
+# ABOUTME: Spring Boot + Temporal configuration for the agentic loop demo.
+# The temporal-spring-boot-starter reads the temporal section to auto-configure the worker.
 
 spring:
   main:
@@ -8,15 +8,11 @@ spring:
   ai:
     retry:
       max-attempts: 1
-    anthropic:
-      api-key: ${ANTHROPIC_API_KEY:}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
       chat:
         options:
-          model: claude-sonnet-4-20250514
-    mcp:
-      client:
-        stdio:
-          servers-configuration: classpath:mcp-servers.json
+          model: gpt-4o
 
   temporal:
     namespace: default
@@ -29,4 +25,3 @@ spring:
         activity-beans:
           - chatModelActivity
           - toolActivitiesImpl
-          - mcpClientActivityImpl
