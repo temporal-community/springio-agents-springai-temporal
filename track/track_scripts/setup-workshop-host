@@ -104,7 +104,7 @@ for i in $(seq 1 30); do
 done
 
 # ─── Workshop repo ────────────────────────────────────────────────────────────
-git clone --branch instruqt https://github.com/temporal-community/springio-agents-springai-temporal.git /workspace/workshop
+git clone --branch instruqt-v2 https://github.com/temporal-community/springio-agents-springai-temporal.git /workspace/workshop
 # NOTE: Update the URL above once the repo is pushed to temporal-community.
 # If the repo is still under mmerrell's personal account at track build time,
 # use: https://github.com/mmerrell/springio-agents-springai-temporal.git
