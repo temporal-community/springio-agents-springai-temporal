@@ -85,7 +85,8 @@ public class Starter {
             System.out.println("=== Agent Result ===");
             System.out.println(result);
         } catch (Exception e) {
-            System.err.println("Workflow failed: " + e.getCause().getMessage());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            System.err.println("Workflow failed: " + cause.getMessage());
         }
 
         scanner.close();
